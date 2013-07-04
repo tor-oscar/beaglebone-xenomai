@@ -1,0 +1,95 @@
+diff --git a/common-bsp/recipes-kernel/linux/linux-mainline-3.8/gpmc/0021-ARM-OMAP2-Add-device-tree-support-for-NOR-flash.patch b/common-bsp/recipes-kernel/linux/linux-mainline-3.8/gpmc/0021-ARM-OMAP2-Add-device-tree-support-for-NOR-flash.patch
+index 2f6a6e6..cde9f33 100644
+--- a/common-bsp/recipes-kernel/linux/linux-mainline-3.8/gpmc/0021-ARM-OMAP2-Add-device-tree-support-for-NOR-flash.patch
++++ b/common-bsp/recipes-kernel/linux/linux-mainline-3.8/gpmc/0021-ARM-OMAP2-Add-device-tree-support-for-NOR-flash.patch
+@@ -125,10 +125,10 @@ diff --git a/arch/arm/mach-omap2/gpmc.c b/arch/arm/mach-omap2/gpmc.c
+ index c127e75..80dd023 100644
+ --- a/arch/arm/mach-omap2/gpmc.c
+ +++ b/arch/arm/mach-omap2/gpmc.c
+-@@ -25,6 +25,11 @@
+- #include <linux/module.h>
++@@ -26,6 +26,11 @@
+  #include <linux/interrupt.h>
+  #include <linux/platform_device.h>
++ #include <linux/ipipe.h>
+ +#include <linux/of.h>
+ +#include <linux/of_address.h>
+ +#include <linux/of_mtd.h>
+diff --git a/common-bsp/recipes-kernel/linux/linux-mainline-3.8/hdmi/0012-tilcdc-Allow-non-audio-modes-when-we-don-t-support-t.patch b/common-bsp/recipes-kernel/linux/linux-mainline-3.8/hdmi/0012-tilcdc-Allow-non-audio-modes-when-we-don-t-support-t.patch
+deleted file mode 100644
+index 429191c..0000000
+--- a/common-bsp/recipes-kernel/linux/linux-mainline-3.8/hdmi/0012-tilcdc-Allow-non-audio-modes-when-we-don-t-support-t.patch
++++ /dev/null
+@@ -1,31 +0,0 @@
+-From 19faf01de066fdfd4aa220041142d6d11d39932f Mon Sep 17 00:00:00 2001
+-From: Pantelis Antoniou <panto@antoniou-consulting.com>
+-Date: Tue, 4 Jun 2013 17:53:07 +0300
+-Subject: [PATCH 12/21] tilcdc: Allow non-audio modes when we don't support
+- them.
+-
+-Allow non-audio modes on an audio capable monitor if we explicitly
+-disable audio.
+-
+-Signed-off-by: Pantelis Antoniou <panto@antoniou-consulting.com>
+----
+- drivers/gpu/drm/tilcdc/tilcdc_crtc.c | 3 ++-
+- 1 file changed, 2 insertions(+), 1 deletion(-)
+-
+-diff --git a/drivers/gpu/drm/tilcdc/tilcdc_crtc.c b/drivers/gpu/drm/tilcdc/tilcdc_crtc.c
+-index 14cee74..5f5f464 100644
+---- a/drivers/gpu/drm/tilcdc/tilcdc_crtc.c
+-+++ b/drivers/gpu/drm/tilcdc/tilcdc_crtc.c
+-@@ -480,7 +480,8 @@ int tilcdc_crtc_mode_valid(struct drm_crtc *crtc, struct drm_display_mode *mode,
+- 		is_cea_mode ? "true" : "false",
+- 		can_output_audio ? "true" : "false" );
+- 
+--	if (edid && has_audio && !can_output_audio) {
+-+	/* we only prune the mode if we ask for it */
+-+	if (audio && edid && has_audio && !can_output_audio) {
+- 		DBG("Pruning mode : Does not support audio");
+- 		return MODE_BAD;
+- 	}
+--- 
+-1.8.1.4
+-
+diff --git a/common-bsp/recipes-kernel/linux/linux-mainline-3.8/net/0004-drivers-net-ethernet-davinci_emac-use-netif_wake_que.patch b/common-bsp/recipes-kernel/linux/linux-mainline-3.8/net/0004-drivers-net-ethernet-davinci_emac-use-netif_wake_que.patch
+deleted file mode 100644
+index d2e80fa..0000000
+--- a/common-bsp/recipes-kernel/linux/linux-mainline-3.8/net/0004-drivers-net-ethernet-davinci_emac-use-netif_wake_que.patch
++++ /dev/null
+@@ -1,35 +0,0 @@
+-From 4e2e4091a2767b3d6aa13e09204530e981ffc93a Mon Sep 17 00:00:00 2001
+-From: Mugunthan V N <mugunthanvnm@ti.com>
+-Date: Wed, 27 Mar 2013 04:42:00 +0000
+-Subject: [PATCH 4/4] drivers: net: ethernet: davinci_emac: use
+- netif_wake_queue() while restarting tx queue
+-
+-To restart tx queue use netif_wake_queue() intead of netif_start_queue()
+-so that net schedule will restart transmission immediately which will
+-increase network performance while doing huge data transfers.
+-
+-Reported-by: Dan Franke <dan.franke@schneider-electric.com>
+-Suggested-by: Sriramakrishnan A G <srk@ti.com>
+-Signed-off-by: Mugunthan V N <mugunthanvnm@ti.com>
+-Acked-by: Eric Dumazet <edumazet@google.com>
+-Signed-off-by: David S. Miller <davem@davemloft.net>
+----
+- drivers/net/ethernet/ti/davinci_emac.c | 2 +-
+- 1 file changed, 1 insertion(+), 1 deletion(-)
+-
+-diff --git a/drivers/net/ethernet/ti/davinci_emac.c b/drivers/net/ethernet/ti/davinci_emac.c
+-index 2a3e2c5..4ebcb24 100644
+---- a/drivers/net/ethernet/ti/davinci_emac.c
+-+++ b/drivers/net/ethernet/ti/davinci_emac.c
+-@@ -1055,7 +1055,7 @@ static void emac_tx_handler(void *token, int len, int status)
+- 	atomic_dec(&priv->cur_tx);
+- 
+- 	if (unlikely(netif_queue_stopped(ndev)))
+--		netif_start_queue(ndev);
+-+		netif_wake_queue(ndev);
+- 	ndev->stats.tx_packets++;
+- 	ndev->stats.tx_bytes += len;
+- 	dev_kfree_skb_any(skb);
+--- 
+-1.8.1.4
+-

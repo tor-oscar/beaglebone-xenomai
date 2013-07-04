@@ -1,0 +1,112 @@
+This guide explains, in general and in depth, how to get xenomai up and running
+on a beaglebone.
+
+Author of this document: Oscar Olsson, osse.olsson@gmail.com
+Contributors: Flavio Castro Alves Filho, flavio.alves@gmail.com 
+Suggestions and questions: osse.olsson@gmail.com
+
+Any references to versions, specific error messages and so forth are specific
+to kernel version 3.8.13 and any other specific instructions in this guide. Any
+deviation means possibility of more, fewer and different errors.
+
+The general steps are as follows:
+1. Fetch all sources:
+
+	1.a Fetch the xenomai prepatched ipipe kernel from xenomai.org
+	git://git.xenomai.org/ipipe.git or git://git.xenomai.org/ipipe-jki.git.
+	Either should work fine, but I have only tried the ipipe-jkl variant. This
+	source is the linux kernel with ipipe patches already applied, we wont have
+	to apply xenomai patches later. Check out the branch or tag corresponding
+	to the 3.8.13 kernel. In ipipe-jkl the branch is called for-upstream/3.8.
+
+	1.b Fetch the meta-beaglebone patches from
+	https://github.com/beagleboard/meta-beagleboard.git. These patches are
+	created from the linux kernel and are nesesary to run linux on the
+	beaglebone. Checkout the commit corresponding to the 3.8.13 kernel, as of
+	writing this the master branch worked perfectly.
+
+	1.c Fetch the xenomai sources from
+	git://git.xenomai.org/xenomai-2.6.git. This repo contains the
+	prepare-kernel.sh script as well as user space support for xenomai.
+
+2. Apply all beaglebone patches to the ipipe kernel.
+
+	2.a Open the file apply-beaglebone-patches.sh and change the value of
+	META_BEAGLEBONE_ROOT to the location of your cloned version of the
+	meta-beaglebone repo (see 1.b).
+
+	2.b Verify that the PATCHSET contains the correct folders in the correct
+	order. The original to this variable is located in the patch.sh file in
+	https://github.com/beagleboard/kernel on branch 3.8. It will contain more
+	folders than the meta-beaglebone repo so you need to remove those from the
+	variable. Check common-bsp/recipes-kernel/linux/linux-mainline-3.8 in
+	meta-beaglebone and remove any folders from the PATCHSET variable not
+	contained in it.
+
+	2.c cd to the ipipe repo root and run the apply-beaglebone-patches.sh
+	script. It will probably generate some errors and these need to be fixed
+	before continuing. I had three errors, two patches was obsolete, already
+	applied to the ipipe kernel. Those were:
+	0004-drivers-net-ethernet-davinci_emac-use-netif_wake_que.patch and
+	0012-tilcdc-Allow-non-audio-modes-when-we-don-t-support-t.patch.
+	Simply move these patches from their folders to resolve the error.
+	The last error I had was an include directive in
+	gpmc/0021-ARM-OMAP2-Add-device-tree-support-for-NOR-flash.patch. To resolve
+	this error i changed the patch to match the the source file in the ipipe
+	repo. There is a patch fixing the above three errors,
+	meta-beaglebone-xenomai.patch.
+	When the errors are resolved, clean the ipipe repo and run the script again.
+	Any remaining errors must be fixed and the patches must be applied to a
+	clean repo before continuing.
+
+3. Prepare kernel for Xenomai
+	3.a cd to ipipe repo root and run the scripts/prepare-kernel.sh script from
+	the xenomai repo.
+	$ $xenomai_root/scripts/prepare-kernel.sh --arch=arm
+
+4. Copy the config file from meta-beaglebone repo to the ipipe repo and
+configure kernel.
+	4.a Copy the config file.
+	$ cp common-bsp/recipes-kernel/linux/linux-mainline-3.8/beaglebone/defconfig $ipipe_root/arch/arm/configs/
+	4.b Configure the kernel, follow the instructions on building xenomai to check how to configure the kernel for xenomai.
+	The basic steps are:
+		* Make sure the submenu 'Real-time sub-system' exists, if not the
+			prepare-kernel script was not successful.
+		* Disable CPU frequency scaling, 'CPU Power Management ---> CPU
+			Frequency scaling'
+		* Check the Real-time sub-system menu, if there are any conflicts left
+			there will be a warning in that menu.
+	$ make ARCH=arm menuconfig
+
+5. Compile the kernel
+	5.a The exact make command i used
+	$ make ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- ZRELADDR=0x80008000 uImage modules
+
+6. Install the new kernel on the beaglebone sc card
+	6.a Copy the uImage file to the sd card
+	$ cp $ipie_root/arch/arm/boot/uImage $sd_card/boot/uImage-xenomai
+	$ cd $sd_card/boot && ln -s uImage uImage-xenomai && cd $ipipe_root
+
+	6.b Install the new modules
+	$ sudo make ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- modules_install INSTALL_MOD_PATH=$sd_card
+
+At this point the xenomai kernel should be bootable and you may try it out by
+booting the beaglebone and check. We only need to build and install the user
+space support before we are done.
+
+7. Build xenomai user space support.
+	7.a cd to $xenomai_root and configure.
+	$ ./configure CFLAGS="-march=armv7-a" LDFLAGS="-march=armv7-a" --host=arm-linux-gnueabi
+	7.b Build it
+	$ make
+	7.c Install it
+	$ mkdir staging && make DESTDIR=$sd_card install
+	7.d Boot the beaglebone and configure ld on the beaglebone.
+	$ echo '/usr/xenomai/lib' >> /etc/ld.so.config
+	$ ldconfig
+
+8. Test the xenomai installation
+	8.a Boot the beaglebone and ssh to it.
+	8.b Run the xenomai user space latency binary
+	$ cd /usr/xenomai/bin && ./xeno latency
+	You should the a table of results printing on stdout.
