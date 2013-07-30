@@ -5,6 +5,8 @@ Author of this document: Oscar Olsson, osse.olsson@gmail.com
 Contributors: Flavio Castro Alves Filho, flavio.alves@gmail.com 
 Suggestions and questions: osse.olsson@gmail.com
 
+See beaglebone-xenomai-debian.md for an alternate guide.
+
 Any references to versions, specific error messages and so forth are specific
 to kernel version 3.8.13 and any other specific instructions in this guide. Any
 deviation means possibility of more, fewer and different errors.
