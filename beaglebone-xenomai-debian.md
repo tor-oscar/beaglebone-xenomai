@@ -13,13 +13,13 @@ This document is split into two parts.
 
 The method presented in this document has been tested on a debian 7.0 (Wheezy) amd64 host and uses toolchains and software repositories from the [emdebian](http://emdebian.org) and [debian](http://www.debian.org) projects.
 
-This document is written by Sagar Behere (sagar.behere@gmail.com) based on an earlier document by Oscar Olsson (osse.olsson@gmail.com). The original instructions reside in the README.md file at <https://github.com/DrunkenInfant/beaglebone-xenomai>
+This document is written by Sagar Behere, sagar.behere@gmail.com based on an earlier document by Oscar Olsson, osse.olsson@gmail.com. The original instructions reside in the README.md file at <https://github.com/DrunkenInfant/beaglebone-xenomai>
 
 # 1. Compiling the kernel and xenomai
 
 ## 1.1 Install the cross-compiler toolchain
 
-First, you need to install the arm crosstoolchain of your choice. The available types are armel and armhf. Google has plenty of information about their differences; what is important at this point is to know that an armel toolchain will produce armel binaries and these will **NOT** work on an armhf rootfs and *vice-versa*. There is no easy way to determine whether a running system is armhf or armel (but see <https://blogs.oracle.com/jtc/entry/is_it_armhf_or_armel>).
+First, you need to install the arm crosstoolchain of your choice. The available types are armel and armhf. Google has plenty of information about their differences; what is important at this point is to know that an armel toolchain will produce armel binaries and these will **NOT** work on an armhf rootfs and *vice-versa*. There is no easy way to determine whether a running system is armhf or armel (but see <https://blogs.oracle.com/jtc/entry/is_it_armhf_or_armel>). That said, armel/armhf makes no difference for the kernel itself. It is the userspace programs/libraries that the differences apply to. Either kernel will boot fine with either userland.
 
 We will install the toolchain provided from the [emdebian](http://emdebian.org) project. We need to add the project's repository to the host system.
 
@@ -83,11 +83,11 @@ which indicates that commit with hash 50316366dd4f75027ee5291b65a9bbcfa9a9e840 i
 
 (*NOTE: This process of rolling back to the particular committ may not be necessary. However in my (Sagar's) case, not rolling back resulted in many errors while applying the patches from the repository and I was too lazy to debug them all :P*)
 
-However, all patches from this repository do not apply cleanly due to some (very minor) issues. However, applying the meta-beaglebone-xenomai.patch from the beaglebone-xenomai repository (see previous sub-section) fixes this
+However, all patches from this repository do not apply cleanly due to some (very minor) issues. Applying the meta-beaglebone-xenomai.patch from the beaglebone-xenomai repository (see previous sub-section) fixes this
 
 	patch -p1 < ~/bbb/beaglebone-xenomai/meta-beaglebone-xenomai.patch
 
-(*NOTE: the meta-beaglebone-xenomai.patch contains patches for three files, and one of which was missing from my meta-beagleboard repository as prepared so far. So I (Sagar) simply did not apply the patch for this file.*)
+(*NOTE: the meta-beaglebone-xenomai.patch contains patches for three files, one of which was missing from my meta-beagleboard repository as prepared so far. So I (Sagar) simply did not apply the patch for this file.*)
 
 ### 1.2.5 Apply meta-beagleboard patches to kernel sources
 
@@ -137,9 +137,9 @@ Now compile the kernel with
 
 	make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- ZRELADDR=0x80008000 uImage modules
 
-After successful compilation, the newly compiled kernel will be found in various formats under arch/arm/boot/
+After successful compilation, the newly compiled kernel will be found in various formats (uImage/zImage/...) under arch/arm/boot/
 
-This appropriate kernel file should be copied to the appropriate location in your system image (SD card). The kernel modules and firmware should also be copied into the proper location of the rootfs. The next part of this document shows how to do this for a debian wheezy armhf system, but for the sake of completeness, know that the modules/firmware can be installed with the commands
+This appropriate kernel file should be copied to the appropriate location in your system image (SD card). The kernel modules and firmware should also be copied into the proper location of the rootfs. Part 2 of this document shows how to do this for a debian wheezy armhf system, but for the sake of completeness, know that the modules/firmware can be installed with the commands
 
 	make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- modules_install INSTALL_MOD_PATH=/path/to/rootfs/
 	make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- firmware_install INSTALL_FW_PATH=/path/to/rootfs/
@@ -154,7 +154,7 @@ The installation to the rootfs mounted on the host is done by
 
 	make DESTDIR=/path/to/mounted/rootfs install
 
-(*NOTE: In another guide gives the command for this as `mkdir staging && make DESTDIR=/path/to/mounted/rootfs install` but I (Sagar) have not understood why the 'mkdir staging &&' part is necessary, or if it in fact does anything useful.*)
+(*NOTE: The original guide gives the command for this as `mkdir staging && make DESTDIR=/path/to/mounted/rootfs install` but I (Sagar) have not understood why the 'mkdir staging &&' part is necessary, or if it in fact does anything useful.*)
 
 # 2 Preparing the SD Card with rootfs
 
